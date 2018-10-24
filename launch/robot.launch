@@ -1,7 +1,12 @@
 <launch>
+  <node pkg="nxt_ros" type="nxt_ros.py" name="nxt1_ros" output="screen" respawn="true">
+	<rosparam command="load" file="$(find moco)/config/robot_1.yaml" />
+	<param name="confpath" type="str" value="$(find moco)/config/nxt1-python"/>
+  </node>
 
-  <node pkg="nxt_ros" type="nxt_ros.py" name="nxt_ros" output="screen" respawn="true">
-    <rosparam command="load" file="$(find moco)/robot.yaml" />
-  </node>       
+  <node pkg="nxt_ros" type="nxt_ros.py" name="nxt2_ros" output="screen" respawn="true">
+    <rosparam command="load" file="$(find moco)/config/robot_2.yaml" />
+    <param name="confpath" type="str" value="$(find moco)/config/nxt2-python"/>
+  </node>
 
 </launch>
