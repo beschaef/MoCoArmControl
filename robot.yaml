@@ -1,6 +1,0 @@
-nxt_robot:
-  - type: motor
-    frame_id: motor_joint
-    name: my_touch_sensor
-    port: PORT_A
-    desired_frequency: 10.0
