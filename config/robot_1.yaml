@@ -5,3 +5,18 @@ nxt_robot:
     name: motor_1
     port: PORT_A
     desired_frequency: 10.0
+  - type: motor
+    frame_id: motor_joint
+    name: motor_2
+    port: PORT_B
+    desired_frequency: 10.0
+  - type: motor
+    frame_id: motor_joint
+    name: motor_3
+    port: PORT_C
+    desired_frequency: 10.0
+  - type: touch
+    frame_id: joint_0_touch
+    name: touch_sensor
+    port: PORT_1
+    desired_frequency: 10.0
