@@ -1,8 +1,6 @@
 #!/usr/bin/python
-print(80*"#")
 #import roslib; roslib.load_manifest('nxt_controllers')
 import rospy
-print(40*"Oo")
 import math
 import thread
 from sensor_msgs.msg import JointState
@@ -39,12 +37,12 @@ class ArmCalibration:
         self.pub = rospy.Publisher('nxt_1/joint_command', JointCommand, queue_size=10)
         rospy.Subscriber('nxt_1/joint_state', JointState, self.joint_states_cb)
         rospy.Subscriber('touch_sensor', Contact, self.touch_cb)
+        rospy.logwarn("Initialized calibration node")
 
     def touch_cb(self, data):
         self.joint_0_contact = data.contact
 
     def joint_states_cb(self, data):
-        print(str(data.name[0] + ": " + str(data.position[0])))
 
         if data.name[0] == MOTOR_A:
             self.joint_0_angle = data.position[0]
@@ -56,15 +54,8 @@ class ArmCalibration:
             self.joint_1_eff = data.effort[0]
 
     def calibrate(self):
-        joint_0_pos = -1
-        joint_0_old = -2
+
         while not self.joint_0_contact:
-            print("pos " + str(joint_0_pos))
-            print("old " + str(joint_0_old))
-            print("new " + str(self.joint_0_angle))
-            print("abs " + str(abs(joint_0_pos - joint_0_old)))
-            joint_0_old = joint_0_pos
-            joint_0_pos = self.joint_0_angle
             JOINT_0_COMMAND.effort = 0.6
             self.pub.publish(JOINT_0_COMMAND)
             self.rate.sleep()
@@ -72,10 +63,9 @@ class ArmCalibration:
 
         JOINT_0_COMMAND.effort = 0.0
         self.pub.publish(JOINT_0_COMMAND)
-        print("!!!!!!CALIBRATED motor 1!!!!!!!")
+        rospy.logwarn("calibrated joint 0")
         joint_1_pos = -1
         while joint_1_pos != self.joint_1_angle or abs(joint_1_pos) <= 1:
-            print("##########" + str(self.joint_1_angle) + "##########")
             joint_1_pos = self.joint_1_angle
             JOINT_1_COMMAND.effort = -0.6
             self.pub.publish(JOINT_1_COMMAND)
@@ -84,7 +74,7 @@ class ArmCalibration:
 
         JOINT_1_COMMAND.effort = 0.0
         self.pub.publish(JOINT_1_COMMAND)
-        print("!!!!!!CALIBRATED!!!!!!!")
+        rospy.logwarn("calibrated joint 1")
         return
 
 
