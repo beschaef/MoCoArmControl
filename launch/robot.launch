@@ -9,7 +9,10 @@
     <param name="confpath" type="str" value="$(find moco)/config/nxt2-python"/>
   </node-->
 
-  <node pkg="moco" type="calibrate.py" name="calibrate" output="screen" respawn="true">
+  <!--<node pkg="moco" type="calibrate.py" name="calibrate" output="screen" respawn="true">
+  </node>-->
+
+  <node pkg="moco" type="arm_position_action_server.py" name="arm_position_action_server" output="screen" respawn="true">
   </node>
 
 </launch>

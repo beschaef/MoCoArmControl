@@ -55,6 +55,7 @@ class ArmCalibration:
             self.joint_0_angle = data.position[0]
             self.joint_0_vel = data.velocity[0]
             self.joint_0_eff = data.effort[0]
+            rospy.logwarn(data.position[0])
         if data.name[0] == MOTOR_B:
             self.joint_1_angle = data.position[0]
             self.joint_1_vel = data.velocity[0]
@@ -76,7 +77,7 @@ class ArmCalibration:
 
     def calibrate_joint_0(self):
         while not self.joint_0_contact:
-            JOINT_0_COMMAND.effort = 0.6
+            JOINT_0_COMMAND.effort = 0.65
             self.pub.publish(JOINT_0_COMMAND)
             self.rate.sleep()
             time.sleep(.5)
@@ -88,7 +89,7 @@ class ArmCalibration:
     def calibrate_joint_1(self):
         joint_1_pos = -1
 
-        while joint_1_pos != self.joint_1_angle or abs(joint_1_pos) <= 1:
+        while abs(joint_1_pos - self.joint_1_angle) > 0.7 or abs(joint_1_pos) <= 1:
             joint_1_pos = self.joint_1_angle
             JOINT_1_COMMAND.effort = -0.6
             self.pub.publish(JOINT_1_COMMAND)
@@ -110,12 +111,12 @@ class ArmCalibration:
         self.pub.publish(GRIPPER_COMMAND)
         self.rate.sleep()
         time.sleep(.2)
-        while abs(gripper_pos - gripper_old) > .8 or abs(gripper_pos) <= 1:
+        while abs(gripper_pos - gripper_old) > 0.8 or abs(gripper_pos) <= 1:
             rospy.logwarn(
                 "old: " + str(gripper_old) + "\npos: " + str(gripper_pos) + "\nang: " + str(self.gripper_angle))
             gripper_old = gripper_pos
             gripper_pos = self.gripper_angle
-            GRIPPER_COMMAND.effort = 0.55
+            GRIPPER_COMMAND.effort = 0.6
             self.pub.publish(GRIPPER_COMMAND)
             self.rate.sleep()
             time.sleep(.5)
@@ -129,7 +130,7 @@ class ArmCalibration:
 def main():
     rospy.init_node('arm_calibration')
     arm_calibration = ArmCalibration()
-    arm_calibration.calibrate()
+    #arm_calibration.calibrate()
     rospy.spin()
 
 

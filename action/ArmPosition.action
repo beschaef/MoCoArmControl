@@ -1,0 +1,13 @@
+# goals (goal positions in rad)
+string[] joint_names_goal
+float32[] joint_position_angles_goal
+---
+
+# results (reached positions in rad)
+string[] joint_names_result
+float32[] joint_position_angles_result
+---
+
+# feedback (current positions in rad)
+string[] joint_names_feedback
+float32[] joint_position_angles_feedback
