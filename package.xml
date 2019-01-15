@@ -38,7 +38,7 @@
   <!--   <build_depend>roscpp</build_depend> -->
   <!--   <exec_depend>roscpp</exec_depend> -->
   <!-- Use build_depend for packages you need at compile time: -->
-  <build_depend>message_generation</build_depend>
+  <!--build_depend>message_generation</build_depend> -->
   <!-- Use build_export_depend for packages you need in order to build against this package: -->
   <!--   <build_export_depend>message_generation</build_export_depend> -->
   <!-- Use buildtool_depend for build tool packages: -->
@@ -52,16 +52,16 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>nxt_ros</build_depend>
   <build_depend>rospy</build_depend>
-  <build_depend>actionlib</build_depend>
-  <build_depend>actionlib_msgs</build_depend>
+  <!--build_depend>actionlib</build_depend> -->
+  <!--build_depend>actionlib_msgs</build_depend> -->
   <build_export_depend>nxt_ros</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
-  <build_export_depend>actionlib</build_export_depend>
-  <build_export_depend>actionlib_msgs</build_export_depend>
+  <!--build_export_depend>actionlib</build_export_depend> -->
+  <!--build_export_depend>actionlib_msgs</build_export_depend> -->
   <exec_depend>nxt_ros</exec_depend>
   <exec_depend>rospy</exec_depend>
-  <exec_depend>actionlib</exec_depend>
-  <exec_depend>actionlib_msgs</exec_depend>
+  <!--exec_depend>actionlib</exec_depend> -->
+  <!--exec_depend>actionlib_msgs</exec_depend> -->
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

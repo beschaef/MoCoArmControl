@@ -1,12 +1,12 @@
 #! /usr/bin/env python
 
 from __future__ import print_function
-import rospy
+import rospy, sys
 
 # Brings in the SimpleActionClient
 import actionlib
 
-from moco.msg import ArmPositionAction, ArmPositionGoal
+from nxt_action_msgs.msg import ArmPositionAction, ArmPositionGoal
 
 def arm_position_client():
     # Creates the SimpleActionClient, passing the type of the action to the constructor.
@@ -17,7 +17,8 @@ def arm_position_client():
     client.wait_for_server()
 
     # Creates a goal to send to the action server.
-    goal = ArmPositionGoal(joint_names_goal = ['motor_1', 'motor_2', 'motor_3'], joint_position_angles_goal=[2.0, 3.0, 4.0])
+    #goal = ArmPositionGoal(joint_names_goal = ['motor_1', 'motor_2', 'motor_3'], joint_position_angles_goal=[5.0, 3.0, 4.0])
+    goal = ArmPositionGoal(joint_names_goal=['motor_1'], joint_position_angles_goal=[15])
 
     # Sends the goal to the action server.
     client.send_goal(goal)
