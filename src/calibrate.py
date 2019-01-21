@@ -15,7 +15,15 @@ JOINT_0_COMMAND = JointCommand()
 JOINT_1_COMMAND = JointCommand()
 GRIPPER_COMMAND = JointCommand()
 
+"""
+This class provides all functions to calibrate the arm.
+"""
 class ArmCalibration:
+
+    """
+    Initialization function of the class.
+    All class variables are created here and the ROS publisher and subscriber initialized.
+    """
     def __init__(self):
         self.initialized = False
 
@@ -46,9 +54,27 @@ class ArmCalibration:
         rospy.Subscriber('touch_sensor', Contact, self.touch_cb)
         rospy.logwarn("Initialized calibration node")
 
+    """
+    Callback function for the touch sensor.
+    Here, the value of the sensor is read out and stored in a class variable.
+    
+    Parameters
+    ----------
+    data : nxt_msgs.Contact
+        Value of the touch sensor
+    """
     def touch_cb(self, data):
         self.joint_0_contact = data.contact
 
+    """
+    Callback function for the servomotors.
+    The values of the motors are stored in the corresponding class variables.
+
+    Parameters
+    ----------
+    data : sensor_msgs.JointState
+        Information of the Motor State. Data includes position, velocity and effort.
+    """
     def joint_states_cb(self, data):
 
         if data.name[0] == MOTOR_A:
@@ -65,6 +91,10 @@ class ArmCalibration:
             self.gripper_vel = data.velocity[0]
             self.gripper_eff = data.effort[0]
 
+    """
+    Calibrates each joint.
+    First the lower, then the upper and finally the gripper.
+    """
     def calibrate(self):
 
         self.calibrate_joint_0()
@@ -75,6 +105,10 @@ class ArmCalibration:
 
         return
 
+    """
+    Calibrates the lower joint.
+    As long as the touch sensor has no contact, the motor continues to rotate.
+    """
     def calibrate_joint_0(self):
         while not self.joint_0_contact:
             JOINT_0_COMMAND.effort = 0.65
@@ -86,6 +120,9 @@ class ArmCalibration:
         self.pub.publish(JOINT_0_COMMAND)
         rospy.logwarn("calibrated joint 0")
 
+    """
+    
+    """
     def calibrate_joint_1(self):
         joint_1_pos = -1
 
