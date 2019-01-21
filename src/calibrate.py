@@ -121,7 +121,11 @@ class ArmCalibration:
         rospy.logwarn("calibrated joint 0")
 
     """
-    
+    Calibrates the upper joint.
+    Since no sensor was installed on the upper joint, the upper arm is partially driven to the stop.
+    Thus it can be checked via the position difference between two measurements whether the joint has
+    reached the stop and is thus calibrated.
+    In addition, the motor is then stopped to not unnecessarily burden both the engine and the arm.
     """
     def calibrate_joint_1(self):
         joint_1_pos = -1
@@ -137,6 +141,14 @@ class ArmCalibration:
         self.pub.publish(JOINT_1_COMMAND)
         rospy.logwarn("calibrated joint 1")
 
+    """
+    Calibrates the gripper.
+    Since no sensor was installed on the gripper, the gripper is partially driven to the stop.
+    Thus it can be checked via the position difference between two measurements whether the gripper has
+    reached the stop and is thus calibrated.
+    Since the worm gear on the gripper has a high resistance, the motor must first be driven with a higher force.
+    In addition, the motor is then stopped to not unnecessarily burden both the engine and the gripper.
+    """
     def calibrate_gripper(self):
         gripper_pos = -1
         gripper_old = -2
@@ -162,15 +174,18 @@ class ArmCalibration:
         self.pub.publish(GRIPPER_COMMAND)
         rospy.logwarn("calibrated gripper")
 
-
-
+"""
+Creates a new object 'ArmCalibration'
+"""
 def main():
     rospy.init_node('arm_calibration')
     arm_calibration = ArmCalibration()
     #arm_calibration.calibrate()
     rospy.spin()
 
-
+"""
+To ensure that the arm has been fully initialized, wait 2 seconds before starting.
+"""
 if __name__ == '__main__':
     time.sleep(2)
     main()
