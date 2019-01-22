@@ -8,6 +8,8 @@ from geometry_msgs.msg import Twist
 from nxt_msgs.msg import Range, JointCommand, Contact
 import time
 import unittest
+import multiprocessing
+import threading
 
 MOTOR_A = "motor_1"
 MOTOR_B = "motor_2"
@@ -15,6 +17,16 @@ GRIPPER = "motor_3"
 JOINT_0_COMMAND = JointCommand()
 JOINT_1_COMMAND = JointCommand()
 GRIPPER_COMMAND = JointCommand()
+
+"""
+funktion um publisher nutzen zu koennen"""
+class mock_ros:
+
+    def publish(self, data):
+        pass
+
+    def sleep(self):
+        pass
 
 """
 This class provides all functions to calibrate the arm.
@@ -56,6 +68,9 @@ class ArmCalibration:
             rospy.Subscriber('nxt_1/joint_state', JointState, self.joint_states_cb)
             rospy.Subscriber('touch_sensor', Contact, self.touch_cb)
             rospy.logwarn("Initialized calibration node")
+        else:
+            self.pub = mock_ros()
+            self.rate = mock_ros()
 
     """
     Callback function for the touch sensor.
@@ -113,6 +128,7 @@ class ArmCalibration:
     As long as the touch sensor has no contact, the motor continues to rotate.
     """
     def calibrate_joint_0(self):
+        print("HELLO!1")
         while not self.joint_0_contact:
             JOINT_0_COMMAND.effort = 0.65
             self.pub.publish(JOINT_0_COMMAND)
@@ -122,6 +138,7 @@ class ArmCalibration:
         JOINT_0_COMMAND.effort = 0.0
         self.pub.publish(JOINT_0_COMMAND)
         rospy.logwarn("calibrated joint 0")
+        return True
 
     """
     Calibrates the upper joint.
@@ -132,7 +149,7 @@ class ArmCalibration:
     """
     def calibrate_joint_1(self):
         joint_1_pos = -1
-
+        print("HELLO!2")
         while abs(joint_1_pos - self.joint_1_angle) > 0.7 or abs(joint_1_pos) <= 1:
             joint_1_pos = self.joint_1_angle
             JOINT_1_COMMAND.effort = -0.6
@@ -143,6 +160,7 @@ class ArmCalibration:
         JOINT_1_COMMAND.effort = 0.0
         self.pub.publish(JOINT_1_COMMAND)
         rospy.logwarn("calibrated joint 1")
+        return True
 
     """
     Calibrates the gripper.
@@ -153,6 +171,7 @@ class ArmCalibration:
     In addition, the motor is then stopped to not unnecessarily burden both the engine and the gripper.
     """
     def calibrate_gripper(self):
+        print("HELLO!3")
         gripper_pos = -1
         gripper_old = -2
 
@@ -176,6 +195,7 @@ class ArmCalibration:
         GRIPPER_COMMAND.effort = 0.0
         self.pub.publish(GRIPPER_COMMAND)
         rospy.logwarn("calibrated gripper")
+        return True
 
 
 """
@@ -205,6 +225,58 @@ class TestArmCalibration(unittest.TestCase):
         self.test_joint_states.position = [13.37]
         self.test_joint_states.velocity = [13.37]
         self.test_joint_states.effort = [1.0]
+
+        self.stop_feeder = False
+
+    """
+    FEEDER
+    """
+    def feed_touch_sensor(self):
+        i = 0
+        while i < 50:
+            if i > 20:
+                self.cal.joint_0_contact = True
+            i += 1
+            time.sleep(.1)
+        print("Finished")
+    """
+    FEEDER
+    """
+    def feed_motor_values(self):
+        i = 0.0
+        decrease = 0.95
+        while not self.stop_feeder:
+            self.cal.joint_0_angle = i
+            self.cal.joint_1_angle = i
+            self.cal.gripper_angle = i
+            i = (i + 1) * decrease
+            print(i)
+            time.sleep(.2)
+
+    """
+    test calibrate
+    """
+    def test_calibrate_joint_0(self):
+        threads = []
+        t = threading.Thread(name='my_service', target=self.feed_touch_sensor)
+        threads.append(t)
+
+        t.start()
+        self.assertEquals(True, self.cal.calibrate_joint_0(), "Callback not working")
+        t.join()
+
+    """
+    test calibrate
+    """
+    # def test_calibrate_joint_1(self):
+    #     threads = []
+    #     t = threading.Thread(target=self.feed_touch_sensor(), args=(0,))
+    #     threads.append(t)
+    #     t.start()
+    #     t = threading.Thread(target=self.assertEquals(True, self.cal.calibrate_joint_1(), "Callback not working"), args=(1,))
+    #     threads.append(t)
+    #     t.start()
+
 
     """
     test callback function of touch sensor
