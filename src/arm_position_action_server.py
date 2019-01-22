@@ -56,7 +56,16 @@ class ArmPositionServer:
             self._sas.start()
 
     """
+    The function is given target angle of the various engines.
+    Subsequently, the various joints or motors are driven from bottom to top 
+    (lower joint, upper joint, Gripper) to the target position. Since the motors 
+    can only be controlled via the effort and the angles can not be read out 
+    exactly, the target angles are approached up to a threshold.
     
+    Parameters
+    ----------
+    msg : ArmPositionAction
+        includes the names of the joints and the corresponding angles.
     """
     def execute_cb(self, msg):
         for i in range(0, len(msg.joint_names_goal)):
@@ -90,6 +99,15 @@ class ArmPositionServer:
         self._sas.set_succeeded(self._result)
         rospy.logwarn("ArmPositionServer succeeded")
 
+    """
+    Callback function for the servomotors.
+    The values of the motors are stored in the corresponding class variables.
+
+    Parameters
+    ----------
+    data : sensor_msgs.JointState
+        Information of the Motor State. Data includes position, velocity and effort.
+    """
     def joint_states_cb(self, data):
         if data.name[0] == MOTOR_A:
             self.joint_positions[MOTOR_A] = data.position[0]
@@ -108,13 +126,11 @@ class ArmPositionServer:
 Testclass for ArmPositionServer Class
 To test the code run 'python -m unittest calibrate.TestArmPositionServer' in src folder.
 """
-
 class TestArmPositionServer(unittest.TestCase):
 
     """
     Creates a new Object and all needed Variables
     """
-
     def setUp(self):
         self.arm_pos_server = ArmPositionServer("",True)
         self.test_joint_states = JointState()
@@ -125,7 +141,6 @@ class TestArmPositionServer(unittest.TestCase):
     """
     test callback function when lower motor is given
     """
-
     def test_joint_states_cb_wrong_values(self):
         self.test_joint_states.name = ["motor_42"]
         self.test_joint_states.position = [13.37]
