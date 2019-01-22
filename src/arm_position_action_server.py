@@ -14,10 +14,20 @@ MOTOR_A = "motor_1"
 MOTOR_B = "motor_2"
 GRIPPER = "motor_3"
 
+
+"""
+The action server provides the control for the arm.
+Only the target angles have to be passed to this.
+The action server then automatically adjusts the target angles.
+"""
 class ArmPositionServer:
     _feedback = ArmPositionFeedback()
     _result = ArmPositionResult()
 
+    """
+    Initialization function of the ActionServer.
+    Initializes the class variables and the required subscribers and publishers.
+    """
     def __init__(self, name):
         self._sas = SimpleActionServer(name, ArmPositionAction, execute_cb=self.execute_cb, auto_start=False)
         self.arm_joint_pub = rospy.Publisher("nxt_1/joint_command", JointCommand, queue_size=10)
@@ -42,6 +52,9 @@ class ArmPositionServer:
 
         self._sas.start()
 
+    """
+    
+    """
     def execute_cb(self, msg):
         for i in range(0, len(msg.joint_names_goal)):
             cmd = JointCommand()
