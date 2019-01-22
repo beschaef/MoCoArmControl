@@ -7,6 +7,7 @@ from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Twist
 from nxt_msgs.msg import Range, JointCommand, Contact
 import time
+import unittest
 
 MOTOR_A = "motor_1"
 MOTOR_B = "motor_2"
@@ -24,7 +25,7 @@ class ArmCalibration:
     Initialization function of the class.
     All class variables are created here and the ROS publisher and subscriber initialized.
     """
-    def __init__(self):
+    def __init__(self, is_test=False):
         self.initialized = False
 
         self.joint_0_angle = 0.0
@@ -40,7 +41,6 @@ class ArmCalibration:
         self.gripper_eff = 0.0
         self.joint_0_contact = False
 
-        self.rate = rospy.Rate(2)
 
         JOINT_0_COMMAND.effort = 0.4
         JOINT_0_COMMAND.name = MOTOR_A
@@ -49,10 +49,12 @@ class ArmCalibration:
         GRIPPER_COMMAND.effort = -0.6
         GRIPPER_COMMAND.name = GRIPPER
 
-        self.pub = rospy.Publisher('nxt_1/joint_command', JointCommand, queue_size=10)
-        rospy.Subscriber('nxt_1/joint_state', JointState, self.joint_states_cb)
-        rospy.Subscriber('touch_sensor', Contact, self.touch_cb)
-        rospy.logwarn("Initialized calibration node")
+        if not is_test:
+            self.rate = rospy.Rate(2)
+            self.pub = rospy.Publisher('nxt_1/joint_command', JointCommand, queue_size=10)
+            rospy.Subscriber('nxt_1/joint_state', JointState, self.joint_states_cb)
+            rospy.Subscriber('touch_sensor', Contact, self.touch_cb)
+            rospy.logwarn("Initialized calibration node")
 
     """
     Callback function for the touch sensor.
@@ -174,6 +176,7 @@ class ArmCalibration:
         self.pub.publish(GRIPPER_COMMAND)
         rospy.logwarn("calibrated gripper")
 
+
 """
 Creates a new object 'ArmCalibration'
 """
@@ -182,6 +185,81 @@ def main():
     arm_calibration = ArmCalibration()
     #arm_calibration.calibrate()
     rospy.spin()
+
+
+"""
+Testclass for ArmCalibration Class
+To test the code run 'python -m unittest calibrate.TestArmCalibration' in src folder.
+"""
+class TestArmCalibration(unittest.TestCase):
+
+    """
+    Creates a new Object and all needed Variables
+    """
+    def setUp(self):
+        self.cal = ArmCalibration(True)
+        self.contact = Contact()
+        self.test_joint_states = JointState()
+        self.contact.contact = True
+        self.test_joint_states.position = [13.37]
+        self.test_joint_states.velocity = [13.37]
+        self.test_joint_states.effort = [1.0]
+
+    """
+    test callback function of touch sensor
+    """
+    def test_touch_cb(self):  # only functions with 'test_'-prefix will be run!
+        self.cal.touch_cb(self.contact)
+        self.assertEquals(True, self.cal.joint_0_contact, "Callback not working")
+
+    """
+    test callback function when lower motor is given
+    """
+    def test_joint_states_cb_wrong_values(self):
+        self.test_joint_states.name = ["motor_42"]
+        self.test_joint_states.position = [13.37]
+        self.test_joint_states.velocity = [13.37]
+        self.test_joint_states.effort = [1.0]
+        self.cal.joint_states_cb(self.test_joint_states)
+        self.assertNotAlmostEqual(13.37, self.cal.joint_0_angle, places=7, msg="Angle: different to high", delta=None)
+        self.assertNotAlmostEqual(13.37, self.cal.joint_0_vel, places=7, msg="Velocity: different to high", delta=None)
+        self.assertNotAlmostEqual(1.0, self.cal.joint_0_eff, places=7, msg="Effort: different to high", delta=None)
+        self.assertNotAlmostEqual(13.37, self.cal.joint_1_angle, places=7, msg="Angle: different to high", delta=None)
+        self.assertNotAlmostEqual(13.37, self.cal.joint_1_vel, places=7, msg="Velocity: different to high", delta=None)
+        self.assertNotAlmostEqual(1.0, self.cal.joint_1_eff, places=7, msg="Effort: different to high", delta=None)
+        self.assertNotAlmostEqual(13.37, self.cal.gripper_angle, places=7, msg="Angle: different to high", delta=None)
+        self.assertNotAlmostEqual(13.37, self.cal.gripper_vel, places=7, msg="Velocity: different to high", delta=None)
+        self.assertNotAlmostEqual(1.0, self.cal.gripper_eff, places=7, msg="Effort: different to high", delta=None)
+
+    """
+    test callback function when lower motor is given
+    """
+    def test_joint_states_cb_motor_0(self):
+        self.test_joint_states.name = ["motor_1"]
+        self.cal.joint_states_cb(self.test_joint_states)
+        self.assertAlmostEqual(13.37, self.cal.joint_0_angle, places=7, msg="Angle: different to high", delta=None)
+        self.assertAlmostEqual(13.37, self.cal.joint_0_vel, places=7, msg="Velocity: different to high", delta=None)
+        self.assertAlmostEqual(1.0, self.cal.joint_0_eff, places=7, msg="Effort: different to high", delta=None)
+
+    """
+    test callback function when upper motor is given
+    """
+    def test_joint_states_cb_motor_1(self):
+        self.test_joint_states.name = ["motor_2"]
+        self.cal.joint_states_cb(self.test_joint_states)
+        self.assertAlmostEqual(13.37, self.cal.joint_1_angle, places=7, msg="Angle: different to high", delta=None)
+        self.assertAlmostEqual(13.37, self.cal.joint_1_vel, places=7, msg="Velocity: different to high", delta=None)
+        self.assertAlmostEqual(1.0, self.cal.joint_1_eff, places=7, msg="Effort: different to high", delta=None)
+
+    """
+    test callback function when gripper motor is given
+    """
+    def test_joint_states_cb_gripper(self):
+        self.test_joint_states.name = ["motor_3"]
+        self.cal.joint_states_cb(self.test_joint_states)
+        self.assertAlmostEqual(13.37, self.cal.gripper_angle, places=7, msg="Angle: different to high", delta=None)
+        self.assertAlmostEqual(13.37, self.cal.gripper_vel, places=7, msg="Velocity: different to high", delta=None)
+        self.assertAlmostEqual(1.0, self.cal.gripper_eff, places=7, msg="Effort: different to high", delta=None)
 
 """
 To ensure that the arm has been fully initialized, wait 2 seconds before starting.
