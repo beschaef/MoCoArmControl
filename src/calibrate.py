@@ -49,6 +49,7 @@ class ArmCalibration:
         GRIPPER_COMMAND.effort = -0.6
         GRIPPER_COMMAND.name = GRIPPER
 
+        # Since the ROS sections without the arm are not readily testable, these were not initialized for the test cases
         if not is_test:
             self.rate = rospy.Rate(2)
             self.pub = rospy.Publisher('nxt_1/joint_command', JointCommand, queue_size=10)

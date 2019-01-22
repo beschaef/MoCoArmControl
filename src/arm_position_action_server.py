@@ -9,6 +9,7 @@ from sensor_msgs.msg import JointState
 from nxt_action_msgs.msg import ArmPositionFeedback, ArmPositionResult, ArmPositionAction
 
 import time
+import unittest
 
 MOTOR_A = "motor_1"
 MOTOR_B = "motor_2"
@@ -28,14 +29,11 @@ class ArmPositionServer:
     Initialization function of the ActionServer.
     Initializes the class variables and the required subscribers and publishers.
     """
-    def __init__(self, name):
-        self._sas = SimpleActionServer(name, ArmPositionAction, execute_cb=self.execute_cb, auto_start=False)
-        self.arm_joint_pub = rospy.Publisher("nxt_1/joint_command", JointCommand, queue_size=10)
-        self.arm_state_sub = rospy.Subscriber("nxt_1/joint_state", JointState, self.joint_states_cb)
+    def __init__(self, name, is_test=False):
 
         self.efforts = {MOTOR_A: 0.7, MOTOR_B: 0.7, GRIPPER: -0.7}
         self.joint_positions = {MOTOR_A: 0.0, MOTOR_B: 0.0, GRIPPER: 0.0}
-        
+
         self.goal_threshold = 0.2
 
         self.joint_0_angle = 0.0
@@ -50,7 +48,12 @@ class ArmPositionServer:
         self.gripper_vel = 0.0
         self.gripper_eff = 0.0
 
-        self._sas.start()
+        # Since the ROS sections without the arm are not readily testable, these were not initialized for the test cases
+        if not is_test:
+            self._sas = SimpleActionServer(name, ArmPositionAction, execute_cb=self.execute_cb, auto_start=False)
+            self.arm_joint_pub = rospy.Publisher("nxt_1/joint_command", JointCommand, queue_size=10)
+            self.arm_state_sub = rospy.Subscriber("nxt_1/joint_state", JointState, self.joint_states_cb)
+            self._sas.start()
 
     """
     
@@ -100,6 +103,81 @@ class ArmPositionServer:
             self.joint_positions[GRIPPER] = data.position[0]
             self.gripper_vel = data.velocity[0]
             self.gripper_eff = data.effort[0]
+
+"""
+Testclass for ArmPositionServer Class
+To test the code run 'python -m unittest calibrate.TestArmPositionServer' in src folder.
+"""
+
+class TestArmPositionServer(unittest.TestCase):
+
+    """
+    Creates a new Object and all needed Variables
+    """
+
+    def setUp(self):
+        self.arm_pos_server = ArmPositionServer("",True)
+        self.test_joint_states = JointState()
+        self.test_joint_states.position = [13.37]
+        self.test_joint_states.velocity = [13.37]
+        self.test_joint_states.effort = [1.0]
+
+    """
+    test callback function when lower motor is given
+    """
+
+    def test_joint_states_cb_wrong_values(self):
+        self.test_joint_states.name = ["motor_42"]
+        self.test_joint_states.position = [13.37]
+        self.test_joint_states.velocity = [13.37]
+        self.test_joint_states.effort = [1.0]
+        self.arm_pos_server.joint_states_cb(self.test_joint_states)
+        self.assertNotAlmostEqual(13.37, self.arm_pos_server.joint_positions[MOTOR_A], places=7, msg="Angle: different to high",
+                                  delta=None)
+        self.assertNotAlmostEqual(13.37, self.arm_pos_server.joint_0_vel, places=7, msg="Velocity: different to high",
+                                  delta=None)
+        self.assertNotAlmostEqual(1.0, self.arm_pos_server.joint_0_eff, places=7, msg="Effort: different to high", delta=None)
+        self.assertNotAlmostEqual(13.37, self.arm_pos_server.joint_positions[MOTOR_B], places=7, msg="Angle: different to high",
+                                  delta=None)
+        self.assertNotAlmostEqual(13.37, self.arm_pos_server.joint_1_vel, places=7, msg="Velocity: different to high",
+                                  delta=None)
+        self.assertNotAlmostEqual(1.0, self.arm_pos_server.joint_1_eff, places=7, msg="Effort: different to high", delta=None)
+        self.assertNotAlmostEqual(13.37, self.arm_pos_server.joint_positions[GRIPPER], places=7, msg="Angle: different to high",
+                                  delta=None)
+        self.assertNotAlmostEqual(13.37, self.arm_pos_server.gripper_vel, places=7, msg="Velocity: different to high",
+                                  delta=None)
+        self.assertNotAlmostEqual(1.0, self.arm_pos_server.gripper_eff, places=7, msg="Effort: different to high", delta=None)
+
+    """
+    test callback function when lower motor is given
+    """
+    def test_joint_states_cb_motor_0(self):
+        self.test_joint_states.name = ["motor_1"]
+        self.arm_pos_server.joint_states_cb(self.test_joint_states)
+        self.assertAlmostEqual(13.37, self.arm_pos_server.joint_positions[MOTOR_A], places=7, msg="Angle: different to high", delta=None)
+        self.assertAlmostEqual(13.37, self.arm_pos_server.joint_0_vel, places=7, msg="Velocity: different to high", delta=None)
+        self.assertAlmostEqual(1.0, self.arm_pos_server.joint_0_eff, places=7, msg="Effort: different to high", delta=None)
+
+    """
+    test callback function when upper motor is given
+    """
+    def test_joint_states_cb_motor_1(self):
+        self.test_joint_states.name = ["motor_2"]
+        self.arm_pos_server.joint_states_cb(self.test_joint_states)
+        self.assertAlmostEqual(13.37, self.arm_pos_server.joint_positions[MOTOR_B], places=7, msg="Angle: different to high", delta=None)
+        self.assertAlmostEqual(13.37, self.arm_pos_server.joint_1_vel, places=7, msg="Velocity: different to high", delta=None)
+        self.assertAlmostEqual(1.0, self.arm_pos_server.joint_1_eff, places=7, msg="Effort: different to high", delta=None)
+
+    """
+    test callback function when gripper motor is given
+    """
+    def test_joint_states_cb_gripper(self):
+        self.test_joint_states.name = ["motor_3"]
+        self.arm_pos_server.joint_states_cb(self.test_joint_states)
+        self.assertAlmostEqual(13.37, self.arm_pos_server.joint_positions[GRIPPER], places=7, msg="Angle: different to high", delta=None)
+        self.assertAlmostEqual(13.37, self.arm_pos_server.gripper_vel, places=7, msg="Velocity: different to high", delta=None)
+        self.assertAlmostEqual(1.0, self.arm_pos_server.gripper_eff, places=7, msg="Effort: different to high", delta=None)
+
 
 if __name__ == '__main__':
     rospy.init_node('arm_position')
