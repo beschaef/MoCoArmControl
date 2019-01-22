@@ -19,7 +19,11 @@ JOINT_1_COMMAND = JointCommand()
 GRIPPER_COMMAND = JointCommand()
 
 """
-funktion um publisher nutzen zu koennen"""
+Since during the test cases the "real" system is not running,
+and thus also ROS is not running, all ROS relevant data be mocked.
+For this purpose, the function pointers of the public and sleep functions 
+are overwritten with "empty" functions
+"""
 class mock_ros:
 
     def publish(self, data):
@@ -61,7 +65,8 @@ class ArmCalibration:
         GRIPPER_COMMAND.effort = -0.6
         GRIPPER_COMMAND.name = GRIPPER
 
-        # Since the ROS sections without the arm are not readily testable, these were not initialized for the test cases
+        # Since the ROS sections without the arm are not readily testable,
+        #  these were not initialized for the test cases.
         if not is_test:
             self.rate = rospy.Rate(2)
             self.pub = rospy.Publisher('nxt_1/joint_command', JointCommand, queue_size=10)
@@ -128,7 +133,6 @@ class ArmCalibration:
     As long as the touch sensor has no contact, the motor continues to rotate.
     """
     def calibrate_joint_0(self):
-        print("HELLO!1")
         while not self.joint_0_contact:
             JOINT_0_COMMAND.effort = 0.65
             self.pub.publish(JOINT_0_COMMAND)
@@ -149,7 +153,6 @@ class ArmCalibration:
     """
     def calibrate_joint_1(self):
         joint_1_pos = -1
-        print("HELLO!2")
         while abs(joint_1_pos - self.joint_1_angle) > 0.7 or abs(joint_1_pos) <= 1:
             joint_1_pos = self.joint_1_angle
             JOINT_1_COMMAND.effort = -0.6
@@ -171,7 +174,6 @@ class ArmCalibration:
     In addition, the motor is then stopped to not unnecessarily burden both the engine and the gripper.
     """
     def calibrate_gripper(self):
-        print("HELLO!3")
         gripper_pos = -1
         gripper_old = -2
 
@@ -229,7 +231,14 @@ class TestArmCalibration(unittest.TestCase):
         self.stop_feeder = False
 
     """
-    FEEDER
+    Since real sensors can not always provide exactly the same 
+    values and the ROS subscriber can not ensure that no wrong 
+    data is being fed in from outside, the callback functions 
+    are fed with data here. Thus, exactly the same values can 
+    be repeatedly tested.
+    In this case, the touch sensor is simulated. Every 0.1 
+    second (10 hertz) new values are published. After 20 values
+    (or 2 seconds), the value is set to 'True'.
     """
     def feed_touch_sensor(self):
         i = 0
@@ -238,11 +247,17 @@ class TestArmCalibration(unittest.TestCase):
                 self.cal.joint_0_contact = True
             i += 1
             time.sleep(.1)
-        print("Finished")
+
     """
-    FEEDER
+    As in the function 'feed_touch_sensor' values are simulated here 
+    as well. Here, the calibration drive is to be simulated. As soon 
+    as the arm is in the minimum position, the engine turns slower 
+    and slower until it finally stops due to the effort. To simulate 
+    this, every 0.2 seconds (5 hertz) new values are published, which 
+    grow more and more slowly (i = (i + 1) * 0.9).
     """
     def feed_motor_values(self):
+        self.stop_feeder = False
         i = 0.0
         decrease = 0.95
         while not self.stop_feeder:
@@ -250,11 +265,10 @@ class TestArmCalibration(unittest.TestCase):
             self.cal.joint_1_angle = i
             self.cal.gripper_angle = i
             i = (i + 1) * decrease
-            print(i)
             time.sleep(.2)
 
     """
-    test calibrate
+    tests calibrating the lower joint.
     """
     def test_calibrate_joint_0(self):
         threads = []
@@ -265,23 +279,33 @@ class TestArmCalibration(unittest.TestCase):
         self.assertEquals(True, self.cal.calibrate_joint_0(), "Callback not working")
         t.join()
 
-    """
-    test calibrate
-    """
-    # def test_calibrate_joint_1(self):
-    #     threads = []
-    #     t = threading.Thread(target=self.feed_touch_sensor(), args=(0,))
-    #     threads.append(t)
-    #     t.start()
-    #     t = threading.Thread(target=self.assertEquals(True, self.cal.calibrate_joint_1(), "Callback not working"), args=(1,))
-    #     threads.append(t)
-    #     t.start()
 
+    """
+    tests calibrating the upper joint.
+    """
+    def test_calibrate_joint_1(self):
+        threads = []
+        t = threading.Thread(target=self.feed_motor_values)
+        threads.append(t)
+        t.start()
+        self.assertEquals(True, self.cal.calibrate_joint_1(), "Callback not working")
+        self.stop_feeder = True
+
+    """
+    tests calibrating the gripper.
+    """
+    def test_calibrate_gripper(self):
+        threads = []
+        t = threading.Thread(target=self.feed_motor_values)
+        threads.append(t)
+        t.start()
+        self.assertEquals(True, self.cal.calibrate_gripper(), "Callback not working")
+        self.stop_feeder = True
 
     """
     test callback function of touch sensor
     """
-    def test_touch_cb(self):  # only functions with 'test_'-prefix will be run!
+    def test_touch_cb(self):
         self.cal.touch_cb(self.contact)
         self.assertEquals(True, self.cal.joint_0_contact, "Callback not working")
 
