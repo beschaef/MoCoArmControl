@@ -23,10 +23,10 @@ class ArmPositionServer:
         self.arm_joint_pub = rospy.Publisher("nxt_1/joint_command", JointCommand, queue_size=10)
         self.arm_state_sub = rospy.Subscriber("nxt_1/joint_state", JointState, self.joint_states_cb)
 
-        self.efforts = {MOTOR_A: 0.7, MOTOR_B: 0.7, GRIPPER: -0.7}
+        self.efforts = {MOTOR_A: 0.7, MOTOR_B: 0.6, GRIPPER: -0.7}
         self.joint_positions = {MOTOR_A: 0.0, MOTOR_B: 0.0, GRIPPER: 0.0}
         
-        self.goal_threshold = 0.2
+        self.goal_threshold = 0.5
 
         self.joint_0_angle = 0.0
         self.joint_0_vel = 0.0

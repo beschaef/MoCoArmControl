@@ -1,4 +1,4 @@
 [Brick]
-host = 00:16:53:08:28:6E
+host = 00:16:53:05:A4:BF
 strict = 0
 method = usb=True, bluetooth=False, fantomusb=True

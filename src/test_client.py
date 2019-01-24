@@ -18,7 +18,7 @@ def arm_position_client():
 
     # Creates a goal to send to the action server.
     #goal = ArmPositionGoal(joint_names_goal = ['motor_1', 'motor_2', 'motor_3'], joint_position_angles_goal=[5.0, 3.0, 4.0])
-    goal = ArmPositionGoal(joint_names_goal=['motor_1'], joint_position_angles_goal=[15])
+    goal = ArmPositionGoal(joint_names_goal=['motor_2'], joint_position_angles_goal=[2.57])
 
     # Sends the goal to the action server.
     client.send_goal(goal)
@@ -38,3 +38,5 @@ if __name__ == '__main__':
         print("Result:", ', '.join([str(n) for n in result.joint_position_angles_result]))
     except rospy.ROSInterruptException:
         print("program interrupted before completion", file=sys.stderr)
+
+    exit()

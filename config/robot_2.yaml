@@ -2,6 +2,6 @@ name: nxt_2
 nxt_robot:
   - type: motor
     frame_id: motor_joint
-    name: motor_1
+    name: motor_base
     port: PORT_A
     desired_frequency: 10.0
